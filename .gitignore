@@ -1,0 +1,150 @@
+# ==========================================
+# Environment & Secrets
+# ==========================================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.jks
+
+
+# ==========================================
+# Java / Maven / Spring Boot
+# ==========================================
+
+target/
+*.class
+*.jar
+*.war
+*.log
+
+.mvn/timing.properties
+
+
+# ==========================================
+# Python / FastAPI
+# ==========================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+ENV/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+*.egg-info/
+dist/
+build/
+
+
+# ==========================================
+# Node / React
+# ==========================================
+
+node_modules/
+dist/
+build/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.vite/
+
+
+# ==========================================
+# Local Databases
+# ==========================================
+
+*.db
+*.sqlite
+*.sqlite3
+
+# H2
+*.mv.db
+*.trace.db
+
+
+# ==========================================
+# IDEs
+# ==========================================
+
+.idea/
+*.iml
+
+.vscode/
+!.vscode/extensions.json
+
+
+# ==========================================
+# OS Files
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ==========================================
+# Logs
+# ==========================================
+
+logs/
+*.log
+
+
+# ==========================================
+# Temporary Files
+# ==========================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+
+# ==========================================
+# Coverage / Testing
+# ==========================================
+
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+
+
+# ==========================================
+# AI / ML Local Artifacts
+# ==========================================
+
+# Local vector indexes
+*.faiss
+*.index
+
+# Downloaded model files
+*.bin
+*.safetensors
+*.gguf
+
+# Local datasets
+data/raw/
+data/processed/
+
+
+# ==========================================
+# Docker
+# ==========================================
+
+docker-compose.override.yml

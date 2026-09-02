@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/knowledge_assistant
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port:  6379
+
+app:
+  admin:
+    email: admin@example.com
+    password: admin123
+
+file:
+  upload-dir: D:/Full Stack Projects/AI_ASSISTANT_KNOWLEDGE_STORAGE/uploads
+
+jwt:
+  secret: my-super-secret-key-my-super-secret-key
+  expiration: 86400000
+  cookie_name: assistant_token
+  cookie_secure: false
+  access:
+    expiration: 900000
+  refresh:
+    expiration: 2592000000

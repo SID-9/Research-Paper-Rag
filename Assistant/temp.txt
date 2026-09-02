@@ -1,0 +1,538 @@
+
+# Current Architecture
+
+```
+Client (React / Angular / Next.js)
+            │
+            │ HTTP + Cookie JWT
+            ▼
+┌───────────────────────────────────────┐
+│           Spring Boot API             │
+├───────────────────────────────────────┤
+│                                       │
+│ Authentication Layer                  │
+│ ─────────────────────                 │
+│ Cookie JWT                            │
+│ Login / Signup                        │
+│ Admin Seeder                          │
+│ Security Filter                       │
+│                                       │
+├───────────────────────────────────────┤
+│ Document Module                       │
+│                                       │
+│ Upload Controller                     │
+│ Download Controller                   │
+│ Delete Controller                     │
+│ List Documents                        │
+│                                       │
+│ DocumentService                       │
+│                                       │
+│ FileStorageService                    │
+│                                       │
+│ SQLite                                │
+│ Stores metadata only                  │
+│                                       │
+│ Local Storage                         │
+│ Stores actual PDFs                    │
+└───────────────────────────────────────┘
+```
+
+---
+
+# Project Structure
+
+```
+document
+│
+├── controller
+│      DocumentController
+│
+├── service
+│      DocumentService
+│      FileStorageService
+│
+├── dto
+│      UploadDocumentResponseDto
+│      DocumentResponseDto
+│
+├── mapper
+│      DocumentMapper
+│
+├── repository
+│      DocumentRepository
+│
+├── model
+│      Document
+│
+└── exception
+       FileStorageException
+```
+
+---
+
+# Storage Architecture
+
+The actual files are **NOT** stored inside the Spring Boot project.
+
+Instead
+
+```
+D:\AI-Knowledge\
+        uploads\
+              1\
+                  pdf1.pdf
+                  pdf2.pdf
+
+              2\
+                  invoice.pdf
+
+              3\
+                  research.pdf
+```
+
+where
+
+```
+uploads/
+      └── userId/
+               └── files
+```
+
+Every user has his own folder.
+
+---
+
+# Database
+
+Only metadata is stored.
+
+Example
+
+```
+Document
+
+id
+
+originalFileName
+
+storedFileName
+
+contentType
+
+size
+
+uploadTime
+
+user_id
+```
+
+No binary data inside SQLite.
+
+---
+
+# Upload Flow
+
+```
+POST /documents/upload
+
+↓
+
+Multipart File
+
+↓
+
+Authentication
+
+↓
+
+Current User extracted
+
+↓
+
+Validate file
+
+↓
+
+Generate UUID filename
+
+↓
+
+Create user folder
+
+↓
+
+Save file on disk
+
+↓
+
+Save metadata in SQLite
+
+↓
+
+Return DTO
+```
+
+---
+
+# Download Flow
+
+```
+GET /documents/{id}
+
+↓
+
+Authenticate
+
+↓
+
+Find metadata
+
+↓
+
+Verify owner
+
+↓
+
+Read file
+
+↓
+
+Return Resource
+
+↓
+
+Browser downloads file
+```
+
+---
+
+# List Documents
+
+```
+GET /documents
+```
+
+returns
+
+```
+[
+   {
+      id,
+      originalFileName,
+      size,
+      uploadedAt
+   },
+   ...
+]
+```
+
+Only documents belonging to the current user.
+
+---
+
+# Delete Document
+
+```
+DELETE /documents/{id}
+
+↓
+
+Find metadata
+
+↓
+
+Verify owner
+
+↓
+
+Delete physical file
+
+↓
+
+Delete DB record
+```
+
+---
+
+# Ownership Check
+
+Every operation checks
+
+```
+document.user.id == loggedInUser.id
+```
+
+Therefore
+
+User A
+
+cannot
+
+* download User B's document
+
+* delete User B's document
+
+* even know it exists
+
+This is one of the most important security checks.
+
+---
+
+# API Endpoints
+
+## Authentication
+
+### Signup
+
+```
+POST /auth/signup
+```
+
+Creates account.
+
+---
+
+### Login
+
+```
+POST /auth/login
+```
+
+Returns JWT cookie.
+
+---
+
+### Logout
+
+```
+POST /auth/logout
+```
+
+Clears cookie.
+
+---
+
+### Current User
+
+```
+GET /auth/me
+```
+
+Returns current logged in user.
+
+---
+
+# Documents
+
+---
+
+## Upload
+
+```
+POST /documents/upload
+```
+
+Consumes
+
+```
+multipart/form-data
+```
+
+Body
+
+```
+file
+```
+
+Returns
+
+```
+{
+   id,
+   originalFilename,
+   uploadTime,
+   size
+}
+```
+
+---
+
+## List
+
+```
+GET /documents
+```
+
+Returns
+
+```
+[
+   {
+      id,
+      originalFilename,
+      uploadTime,
+      size
+   }
+]
+```
+
+---
+
+## Download
+
+```
+GET /documents/{id}
+```
+
+Downloads the actual file.
+
+---
+
+## Delete
+
+```
+DELETE /documents/{id}
+```
+
+Deletes both
+
+* physical file
+
+* metadata
+
+---
+
+# Authentication Requirement
+
+All document endpoints require login.
+
+```
+Cookie JWT
+        ↓
+Auth Filter
+        ↓
+Security Context
+        ↓
+@AuthenticationPrincipal
+        ↓
+Current User
+```
+
+---
+
+# Folder Responsibilities
+
+## DocumentController
+
+Responsible for
+
+* HTTP endpoints
+* Request validation
+* Returning ResponseEntity
+
+No business logic.
+
+---
+
+## DocumentService
+
+Responsible for
+
+* ownership validation
+* saving metadata
+* deleting metadata
+* retrieving metadata
+* calling storage service
+
+No file I/O here.
+
+---
+
+## FileStorageService
+
+Responsible only for
+
+* creating folders
+* storing files
+* reading files
+* deleting files
+
+No database code.
+
+---
+
+## Repository
+
+Responsible only for SQL.
+
+Nothing else.
+
+---
+
+## Mapper
+
+Responsible only for
+
+```
+Entity
+
+↓
+
+DTO
+
+↓
+
+Entity
+```
+
+No business logic.
+
+---
+
+# Complete Flow
+
+```
+User
+
+↓
+
+Login
+
+↓
+
+JWT Cookie
+
+↓
+
+Upload PDF
+
+↓
+
+DocumentController
+
+↓
+
+DocumentService
+
+↓
+
+FileStorageService
+
+↓
+
+Disk
+
+↓
+
+DocumentRepository
+
+↓
+
+SQLite
+
+↓
+
+Return Success
+```
+
+---
